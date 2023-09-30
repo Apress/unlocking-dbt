@@ -1,0 +1,7 @@
+# Additional packages can be added here. Good first place to check is hub.getdbt.com
+packages:
+  - package: dbt-labs/dbt_utils
+    version: [">=1.0.0", "<1.1.0"]
+
+  - package: dbt-labs/codegen
+    version: [">=0.9.0", "<1.0.0"]

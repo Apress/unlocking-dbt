@@ -1,0 +1,75 @@
+name: dbt Build Diffs
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+env:
+  DBT_PR_NUMBER: ${{ github.event.number }}
+  DBT_ENV_SECRECT_USER: STORE_USERNAME_AS_GITHUB_SECRET
+  DBT_ENV_SECRECT_PASSWORD: STORE_PASSWORD_AS_GITHUB_SECRET
+
+jobs:
+  build_dbt_diffs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+          clean: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+
+      - name: dbt deps main
+        run: |
+          dbt deps \
+          --profiles-dir . \
+          --target prod
+
+      - name: dbt compile main
+        run: |
+          dbt compile \
+          --profiles-dir . \
+          --target prod
+   
+      - name: git production target
+        run: |
+          mkdir -pv ./prod_target && cp -r target ./prod_target
+
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+          clean: false
+
+      - name: dbt deps
+        run: |
+          dbt deps \
+          --profiles-dir . \
+          --target prod
+
+      - name: clone db
+        run: |
+          dbt run-operation clone_database_for_ci \
+          --profiles-dir . \
+          --target prod
+
+      - name: dbt build diffs
+        run: |
+          dbt build \
+          --select state:modified+ \
+          --state ./prod_target/target \
+          --profiles-dir . \
+          --target ci \
+
+      - name: drop cloned db
+        run: |
+          dbt run-operation drop_database_for_ci \
+          --profiles-dir . \
+          --target ci

@@ -1,0 +1,35 @@
+my_first_dbt_project:
+  target: dev
+  outputs:
+    dev:
+      account: YOUR_ACCOUNT_HERE
+      database: dbt_learning
+      password: YOUR_PASSWORD_HERE
+      role: dbt_transformer
+      schema: YOUR_NAME_HERE
+      threads: 8
+      type: snowflake
+      user: YOUR_USER_HERE
+      warehouse: dbt
+
+    prod:
+      account: YOUR_ACCOUNT_HERE
+      database: analytics
+      password: YOUR_PASSWORD_HERE
+      role: dbt_transformer
+      schema: public
+      threads: 8
+      type: snowflake
+      user: YOUR_USER_HERE
+      warehouse: dbt
+
+    ci:
+      account: YOUR_ACCOUNT_HERE
+      database: analytics_{{ env_var('DBT_PR_NUMBER')}}
+      password: YOUR_PASSWORD_HERE
+      role: dbt_transformer
+      schema: public
+      threads: 8
+      type: snowflake
+      user: YOUR_USER_HERE
+      warehouse: dbt

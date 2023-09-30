@@ -1,0 +1,43 @@
+name: Lint
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+env:
+  DBT_PR_NUMBER: ${{ github.event.number }}
+  DBT_ENV_SECRECT_USER: STORE_USERNAME_AS_GITHUB_SECRET
+  DBT_ENV_SECRECT_PASSWORD: STORE_PASSWORD_AS_GITHUB_SECRET
+
+jobs:
+  sqlfluff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+     
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+
+      - name: dbt deps
+        run: |
+          dbt deps \
+          --profiles-dir . \
+          --target prod
+
+      - name: Run SQL Fluff on Diffs
+        run: |
+          diff-quality \
+          --violations sqlfluff \
+          --compare-branch origin/MAIN \
+          --fail-under 90 \
+          --html-report report.html \
+          >> $GITHUB_STEP_SUMMARY
